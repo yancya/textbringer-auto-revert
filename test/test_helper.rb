@@ -81,6 +81,20 @@ module Textbringer
       module_function(name)
     end
   end
+
+  class GlobalMinorMode
+    def self.add_hook(name, hook)
+      Textbringer.add_hook(name, hook)
+    end
+
+    def self.remove_hook(name, hook)
+      Textbringer.remove_hook(name, hook)
+    end
+
+    def self.message(msg)
+      Textbringer.message(msg)
+    end
+  end
 end
 
 require "textbringer/auto-revert"
