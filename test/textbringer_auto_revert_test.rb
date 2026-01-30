@@ -87,4 +87,16 @@ class Textbringer::GlobalAutoRevertModeTest < Test::Unit::TestCase
 
     assert_equal false, @buffer.reverted
   end
+
+  test "reverts read-only buffer when file is modified" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_modified = true
+    @buffer.modified = false
+    @buffer.read_only = true
+
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    assert_equal true, @buffer.reverted
+    assert_equal true, @buffer.read_only?, "Buffer should remain read-only after revert"
+  end
 end

@@ -12,7 +12,11 @@ module Textbringer
       return unless buffer.file_modified?
 
       if !buffer.modified?
-        buffer.revert
+        if buffer.read_only?
+          buffer.read_only_edit { buffer.revert }
+        else
+          buffer.revert
+        end
         message("Reverted buffer from file") if CONFIG[:auto_revert_verbose]
       else
         message("Buffer has unsaved changes; file changed on disk")

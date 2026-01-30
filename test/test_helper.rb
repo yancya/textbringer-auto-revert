@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 # Mock Textbringer for testing without the actual dependency
 module Textbringer
+  class EditorError < StandardError; end
   CONFIG = {} unless defined?(CONFIG)
   HOOKS = Hash.new { |h, k| h[k] = [] } unless defined?(HOOKS)
 
@@ -20,7 +21,7 @@ module Textbringer
       attr_accessor :current, :list
     end
 
-    attr_accessor :file_name, :name
+    attr_accessor :file_name, :name, :read_only
     attr_reader :reverted, :properties
 
     def initialize(name: nil, file_name: nil)
@@ -29,7 +30,20 @@ module Textbringer
       @modified = false
       @file_modified = false
       @reverted = false
+      @read_only = false
       @properties = {}
+    end
+
+    def read_only?
+      @read_only
+    end
+
+    def read_only_edit
+      old_read_only = @read_only
+      @read_only = false
+      yield
+    ensure
+      @read_only = old_read_only
     end
 
     def [](key)
@@ -57,6 +71,7 @@ module Textbringer
     end
 
     def revert
+      raise EditorError, "Read-only buffer" if @read_only
       @reverted = true
     end
   end
