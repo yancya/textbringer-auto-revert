@@ -82,6 +82,10 @@ module Textbringer
     end
   end
 
+  def self.define_command(name, doc: nil, &block)
+    Commands.define_command(name, doc: doc, &block)
+  end
+
   class GlobalMinorMode
     class << self
       attr_accessor :enabled

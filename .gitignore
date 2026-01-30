@@ -12,3 +12,6 @@ Gemfile.lock
 
 # Claude Code settings
 .claude/
+
+# Built gems
+*.gem
