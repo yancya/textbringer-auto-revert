@@ -83,6 +83,11 @@ module Textbringer
   end
 
   class GlobalMinorMode
+    class << self
+      attr_accessor :enabled
+      alias enabled? enabled
+    end
+
     def self.add_hook(name, hook)
       Textbringer.add_hook(name, hook)
     end

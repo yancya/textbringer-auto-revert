@@ -18,20 +18,26 @@ bundle add textbringer-auto-revert
 
 ## Usage
 
+**Auto-revert mode is enabled by default** when the plugin is loaded.
+
+When a file is modified externally and the buffer has no unsaved changes, the buffer will automatically revert to the file's contents after any command execution.
+
 ### Commands
 
 | Command | Description |
 |---------|-------------|
-| `auto_revert_mode` | Toggle auto-revert mode for the current buffer |
-| `global_auto_revert_mode` | Toggle global auto-revert mode for all buffers |
+| `global_auto_revert_mode` | Toggle global auto-revert mode on/off |
 
-### Example
+### Disabling
 
-1. Open a file in Textbringer (`C-x C-f`)
-2. Enable global auto-revert mode: `M-x global_auto_revert_mode`
-3. Edit the file externally (e.g., in another terminal)
-4. Execute any command in Textbringer (e.g., `C-n`)
-5. The buffer will automatically revert to the file's contents
+To temporarily disable, run `M-x global_auto_revert_mode`.
+
+To permanently disable, uninstall the gem or add to your Textbringer config:
+
+```ruby
+Textbringer::GlobalAutoRevertMode.disable
+Textbringer::GlobalAutoRevertMode.enabled = false
+```
 
 ### Configuration
 

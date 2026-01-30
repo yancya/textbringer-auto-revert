@@ -30,4 +30,7 @@ module Textbringer
     end
   end
 
+  # Enable by default on plugin load
+  GlobalAutoRevertMode.enable
+  GlobalAutoRevertMode.enabled = true
 end
