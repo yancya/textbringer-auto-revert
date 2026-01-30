@@ -30,6 +30,10 @@ module Textbringer
     end
   end
 
+  define_command(:global_auto_revert_mode, doc: "Toggle global auto-revert mode.") do
+    GlobalAutoRevertMode.toggle
+  end
+
   # Enable by default on plugin load
   GlobalAutoRevertMode.enable
   GlobalAutoRevertMode.enabled = true
