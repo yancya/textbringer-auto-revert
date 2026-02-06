@@ -47,7 +47,7 @@ Textbringer::GlobalAutoRevertMode.enabled = false
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests.
+After checking out the repo, run `bundle install` to install dependencies. Then, run `bundle exec rake test` to run the tests.
 
 To install this gem onto your local machine, run `bundle exec rake install`.
 

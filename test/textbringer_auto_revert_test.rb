@@ -11,6 +11,7 @@ class Textbringer::GlobalAutoRevertModeTest < Test::Unit::TestCase
     Textbringer::Buffer.list = [@buffer]
     Textbringer.messages = []
     Textbringer::HOOKS.clear
+    Textbringer::CONFIG[:auto_revert_verbose] = true
   end
 
   test "VERSION is defined" do
@@ -56,6 +57,29 @@ class Textbringer::GlobalAutoRevertModeTest < Test::Unit::TestCase
 
     assert_equal false, @buffer.reverted
     assert_includes Textbringer.messages, "Buffer has unsaved changes; file changed on disk"
+  end
+
+  test "warns only once while file remains modified and buffer has changes" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_modified = true
+    @buffer.modified = true
+
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    warnings = Textbringer.messages.count { |msg| msg == "Buffer has unsaved changes; file changed on disk" }
+    assert_equal 1, warnings
+  end
+
+  test "suppresses warnings when verbose is disabled" do
+    Textbringer::GlobalAutoRevertMode.enable
+    Textbringer::CONFIG[:auto_revert_verbose] = false
+    @buffer.file_modified = true
+    @buffer.modified = true
+
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    refute_includes Textbringer.messages, "Buffer has unsaved changes; file changed on disk"
   end
 
   test "does not revert when file is not modified" do
