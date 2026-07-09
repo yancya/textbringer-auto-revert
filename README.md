@@ -1,5 +1,7 @@
 # Textbringer Auto Revert
 
+[![CI](https://github.com/yancya/textbringer-auto-revert/actions/workflows/ci.yml/badge.svg)](https://github.com/yancya/textbringer-auto-revert/actions/workflows/ci.yml)
+
 A Textbringer plugin that automatically reverts buffers when files are modified externally.
 
 ## Installation
