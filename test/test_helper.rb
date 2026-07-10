@@ -37,6 +37,7 @@ module Textbringer
       @properties = {}
       @point = 0
       @size = 100
+      @invalid_positions = nil
     end
 
     attr_accessor :invalid_positions # byte offsets that fall mid-character
@@ -113,6 +114,17 @@ module Textbringer
     Textbringer.messages << msg
   end
 
+  # Real Utils#background starts a plain Thread.
+  def background(&block)
+    Thread.start(&block)
+  end
+
+  # Real Utils#foreground queues the block onto the main event loop; the
+  # mock runs it synchronously, which is equivalent for these tests.
+  def foreground(&block)
+    block.call
+  end
+
   module Commands
     def self.define_command(name, doc: nil, &block)
       define_method(name, &block)
@@ -130,6 +142,35 @@ module Textbringer
       alias enabled? enabled
     end
 
+    # Real GlobalMinorMode.inherited (textbringer >= 15) auto-defines a
+    # toggle command named after the subclass.
+    def self.inherited(child)
+      super
+      child.instance_variable_set(:@enabled, false)
+      base_name = child.name.slice(/[^:]*\z/)
+      command_name = base_name.sub(/\A[A-Z]/) { |s| s.downcase }
+                              .gsub(/(?<=[a-z])([A-Z])/) { "_#{$1.downcase}" }
+      Textbringer.define_command(command_name.intern) do |arg = nil|
+        enable =
+          case arg
+          when true, false
+            next if child.enabled? == arg
+            arg
+          when nil
+            !child.enabled?
+          else
+            raise ArgumentError, "wrong argument #{arg.inspect} (expected true, false, or nil)"
+          end
+        if enable
+          child.enable
+          child.enabled = true
+        else
+          child.disable
+          child.enabled = false
+        end
+      end
+    end
+
     def self.add_hook(name, hook)
       Textbringer.add_hook(name, hook)
     end
@@ -140,6 +181,14 @@ module Textbringer
 
     def self.message(msg)
       Textbringer.message(msg)
+    end
+
+    def self.background(&block)
+      Textbringer.background(&block)
+    end
+
+    def self.foreground(&block)
+      Textbringer.foreground(&block)
     end
   end
 end
