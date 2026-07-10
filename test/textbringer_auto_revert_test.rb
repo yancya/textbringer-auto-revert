@@ -123,4 +123,61 @@ class Textbringer::GlobalAutoRevertModeTest < Test::Unit::TestCase
     assert_equal true, @buffer.reverted
     assert_equal true, @buffer.read_only?, "Buffer should remain read-only after revert"
   end
+
+  test "does not raise when the visited file is missing on disk" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_missing = true
+
+    assert_nothing_raised do
+      Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    end
+    assert_equal false, @buffer.reverted
+  end
+
+  test "warns only once while the file remains missing" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_missing = true
+
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    warnings = Textbringer.messages.grep(/Auto-revert failed/)
+    assert_equal 1, warnings.size
+  end
+
+  test "auto-revert works again and warns anew after the file reappears" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_missing = true
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    @buffer.file_missing = false
+    @buffer.file_modified = true
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    assert_equal true, @buffer.reverted
+
+    @buffer.file_missing = true
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    warnings = Textbringer.messages.grep(/Auto-revert failed/)
+    assert_equal 2, warnings.size
+  end
+
+  test "does not raise when revert itself fails (file deleted mid-revert)" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_modified = true
+    @buffer.revert_error = Errno::ENOENT.new("/tmp/test.txt")
+
+    assert_nothing_raised do
+      Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    end
+  end
+
+  test "suppresses missing-file warnings when verbose is disabled" do
+    Textbringer::GlobalAutoRevertMode.enable
+    Textbringer::CONFIG[:auto_revert_verbose] = false
+    @buffer.file_missing = true
+
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    assert_empty Textbringer.messages.grep(/Auto-revert failed/)
+  end
 end

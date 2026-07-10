@@ -21,7 +21,7 @@ module Textbringer
       attr_accessor :current, :list
     end
 
-    attr_accessor :file_name, :name, :read_only
+    attr_accessor :file_name, :name, :read_only, :file_missing, :revert_error
     attr_reader :reverted, :properties
 
     def initialize(name: nil, file_name: nil)
@@ -31,6 +31,8 @@ module Textbringer
       @file_modified = false
       @reverted = false
       @read_only = false
+      @file_missing = false
+      @revert_error = nil
       @properties = {}
     end
 
@@ -62,7 +64,10 @@ module Textbringer
       @modified = val
     end
 
+    # Real Buffer#file_modified? calls File.mtime, which raises
+    # Errno::ENOENT when the visited file was deleted/renamed on disk.
     def file_modified?
+      raise Errno::ENOENT, @file_name if @file_missing
       @file_modified
     end
 
@@ -72,6 +77,7 @@ module Textbringer
 
     def revert
       raise EditorError, "Read-only buffer" if @read_only
+      raise @revert_error if @revert_error
       @reverted = true
     end
   end
