@@ -21,8 +21,9 @@ module Textbringer
       attr_accessor :current, :list
     end
 
-    attr_accessor :file_name, :name, :read_only, :file_missing, :revert_error
-    attr_reader :reverted, :properties
+    attr_accessor :file_name, :name, :read_only, :file_missing, :revert_error,
+                  :size
+    attr_reader :reverted, :properties, :point
 
     def initialize(name: nil, file_name: nil)
       @name = name || "test"
@@ -34,6 +35,20 @@ module Textbringer
       @file_missing = false
       @revert_error = nil
       @properties = {}
+      @point = 0
+      @size = 100
+    end
+
+    attr_accessor :invalid_positions # byte offsets that fall mid-character
+
+    # Mirrors real Buffer#goto_char: raises RangeError when out of range,
+    # ArgumentError when the position is in the middle of a character.
+    def goto_char(pos)
+      raise RangeError, "Out of buffer" if pos < 0 || pos > @size
+      if @invalid_positions&.include?(pos)
+        raise ArgumentError, "Position is in the middle of a character"
+      end
+      @point = pos
     end
 
     def read_only?
@@ -75,10 +90,12 @@ module Textbringer
       @file_modified = val
     end
 
+    # Real Buffer#revert clears the buffer, which resets point to 0.
     def revert
       raise EditorError, "Read-only buffer" if @read_only
       raise @revert_error if @revert_error
       @reverted = true
+      @point = 0
     end
   end
 

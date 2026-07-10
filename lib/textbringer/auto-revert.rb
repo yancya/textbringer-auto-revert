@@ -18,11 +18,13 @@ module Textbringer
         end
 
         if !buffer.modified?
+          saved_point = buffer.point
           if buffer.read_only?
             buffer.read_only_edit { buffer.revert }
           else
             buffer.revert
           end
+          restore_point(buffer, saved_point)
           buffer[:auto_revert_warned] = false
           buffer[:auto_revert_error_warned] = false
           message("Reverted buffer from file") if CONFIG[:auto_revert_verbose]
@@ -43,6 +45,22 @@ module Textbringer
         end
       end
     }
+
+    # Buffer#revert resets point to 0; put it back where it was, clamped to
+    # the new buffer size. The reverted content may have shifted so the old
+    # byte offset can land inside a multi-byte character (goto_char raises
+    # ArgumentError) — step back until it sticks.
+    def self.restore_point(buffer, pos)
+      pos = pos.clamp(0, buffer.size)
+      begin
+        buffer.goto_char(pos)
+      rescue ArgumentError
+        pos -= 1
+        retry if pos >= 0
+      rescue RangeError
+        # size changed between clamp and goto_char; stay at 0
+      end
+    end
 
     def self.enable
       add_hook(:post_command_hook, POST_COMMAND_HOOK)

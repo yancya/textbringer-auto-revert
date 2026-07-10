@@ -171,6 +171,43 @@ class Textbringer::GlobalAutoRevertModeTest < Test::Unit::TestCase
     end
   end
 
+  test "preserves point across auto-revert" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_modified = true
+    @buffer.goto_char(42)
+
+    Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+
+    assert_equal true, @buffer.reverted
+    assert_equal 42, @buffer.point
+  end
+
+  test "clamps point to buffer size when the file shrank below old point" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_modified = true
+    @buffer.goto_char(90)
+    @buffer.size = 10 # reverted content is shorter than old point
+
+    assert_nothing_raised do
+      Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    end
+    assert_equal true, @buffer.reverted
+    assert_equal 10, @buffer.point
+  end
+
+  test "steps back to a character boundary when old point lands mid-character" do
+    Textbringer::GlobalAutoRevertMode.enable
+    @buffer.file_modified = true
+    @buffer.goto_char(42)
+    @buffer.invalid_positions = [42, 41] # content shifted; 42 is now inside a multi-byte char
+
+    assert_nothing_raised do
+      Textbringer::GlobalAutoRevertMode::POST_COMMAND_HOOK.call
+    end
+    assert_equal true, @buffer.reverted
+    assert_equal 40, @buffer.point
+  end
+
   test "suppresses missing-file warnings when verbose is disabled" do
     Textbringer::GlobalAutoRevertMode.enable
     Textbringer::CONFIG[:auto_revert_verbose] = false
